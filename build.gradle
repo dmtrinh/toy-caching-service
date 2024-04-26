@@ -1,0 +1,152 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.2.5'
+	id 'io.spring.dependency-management' version '1.1.4'
+    id("org.graalvm.buildtools.native") version "0.10.1"
+	id 'jacoco'
+	id "org.sonarqube" version "4.3.1.3277"
+}
+
+group = 'com.thedarkside'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	sourceCompatibility = '17'
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-json'
+
+	implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+	implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
+    implementation platform('io.micrometer:micrometer-tracing-bom:latest.release')
+    implementation 'io.micrometer:micrometer-tracing'
+    implementation 'io.micrometer:micrometer-observation'
+
+	compileOnly 'org.projectlombok:lombok'
+
+	runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+
+	annotationProcessor 'org.projectlombok:lombok'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+    //// Uncommenting the next dependency will activate Spring Boot 3's built-in 
+	//// Docker Compose support.  This is disabled to avoid conflict with [local-stack]
+	// developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
+	////
+}
+
+testing {
+    suites { 
+        test { 
+            useJUnitJupiter() 
+            
+            targets.all {
+                testTask.configure {
+                    systemProperty 'spring.config.location', file(project.projectDir).absolutePath + '/application-local.yaml'
+                }
+            }
+        }
+    }
+}
+
+ext {
+    jacocoExcludes = [
+            '**/com/thedarkside/**/model/**'
+    ]
+}
+
+jacocoTestReport {
+    reports {
+        html.required = true
+        xml.required = true
+    }
+    afterEvaluate {
+        excludedClassFilesForReport(classDirectories)
+    }
+}
+
+jacocoTestCoverageVerification {
+    afterEvaluate {
+        excludedClassFilesForReport(classDirectories)
+    }
+
+    violationRules {
+        rule {
+            limit {
+                counter = 'INSTRUCTION'
+                value = 'COVEREDRATIO'
+                minimum = 0.01
+            }
+        }
+    }
+
+}
+
+private excludedClassFilesForReport(classDirectories) {
+    classDirectories.setFrom(files(classDirectories.files.collect {
+        fileTree(dir: it,
+                exclude: jacocoExcludes
+        )
+    }))
+}
+
+jacoco {
+    toolVersion = "0.8.10"
+}
+
+check.dependsOn jacocoTestCoverageVerification
+jacocoTestCoverageVerification.dependsOn jacocoTestReport
+
+sonarqube {
+    properties {
+        property "sonar.projectKey", "toy-caching-service"
+        property 'sonar.coverage.exclusions', jacocoExcludes
+    }
+}
+
+// Extend built-in bootRun task to use config for local development
+task bootRunLocal(type: org.springframework.boot.gradle.tasks.run.BootRun, dependsOn: 'testLocal') {
+	description 'Executes bootRun with application-local.yaml as the Spring config'
+	group 'application'
+	//println file(project.projectDir).absolutePath + "/application-local.yaml"
+	mainClass = bootRun.mainClass
+    classpath = bootRun.classpath
+    systemProperty 'spring.config.location', file(project.projectDir).absolutePath + '/application-local.yaml'
+}
+
+// No longer needed with new testing suites block above
+//  task testLocal(type: Test) {
+// 	description 'Executes test with application-local.yaml as the Spring config'
+// 	group 'application'
+// 	useJUnitPlatform()
+//     systemProperty 'spring.config.location', file(project.projectDir).absolutePath + '/application-local.yaml'
+// }
+
+task dockerComposeDown(type: Exec) {
+    commandLine 'docker', 'compose', 'down'
+}
+
+task dockerImagePrune(type: Exec) {
+    commandLine 'docker', 'image', 'prune', '-f'
+
+    mustRunAfter 'buildImage'
+}
+
+task buildImage(type: Exec, dependsOn: [ 'dockerComposeDown', 'assemble' ]) {
+    description "Builds a new Docker image and remove any old images"
+
+    commandLine 'docker', 'build', '-t', 'thedarkside/toy-caching-service', '.'
+
+    mustRunAfter 'assemble'
+    finalizedBy 'dockerImagePrune'
+}
+
+defaultTasks 'assemble', 'test'

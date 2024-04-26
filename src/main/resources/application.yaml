@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: toy-caching-service
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      username: ${REDIS_USERNAME}
+      password: ${REDIS_PASSWORD}
+      ssl.enabled: true
+      timeout: 10000
+      my:
+        cache-ttl-seconds: 604800
+        cache-null-values: false
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+  observations:
+    annotations:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  zipkin:
+    tracing:
+      endpoint: http://zipkin:9411/api/v2/spans
