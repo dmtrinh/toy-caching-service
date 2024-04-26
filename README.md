@@ -26,16 +26,16 @@ To use the standard Spring Boot-Gradle tasks (e.g. `bootRun`, `bootTestRun`), th
    *  `REDIS_USERNAME`
    *  `REDIS_PASSWORD`
 
-**For a quicker setup**, use [local-stack](https://github.com/dmtrinh/local-stack) and then one of the two options:
+**For a quicker setup**, use [local-stack](https://github.com/dmtrinh/local-stack) and then one of these two options:
 
-#### Docker Compose
+#### Option #1: Docker Compose
 ```shell
 docker compose up
 ```
 
 This will instantiate the previously built container for this microservice and join it to the same `local-stack-network`.
 
-#### application-local.yaml config for Spring Boot
+#### Option #2: application-local.yaml config for Spring Boot
 The [application-local.yaml](application-local.yaml) has been pre-wired to work with [local-stack](https://github.com/dmtrinh/local-stack):
 
 ```shell
