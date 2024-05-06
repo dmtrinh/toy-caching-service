@@ -113,7 +113,7 @@ sonarqube {
 }
 
 // Extend built-in bootRun task to use config for local development
-task bootRunLocal(type: org.springframework.boot.gradle.tasks.run.BootRun, dependsOn: 'testLocal') {
+task bootRunLocal(type: org.springframework.boot.gradle.tasks.run.BootRun, dependsOn: 'test') {
 	description 'Executes bootRun with application-local.yaml as the Spring config'
 	group 'application'
 	//println file(project.projectDir).absolutePath + "/application-local.yaml"
