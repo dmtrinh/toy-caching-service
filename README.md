@@ -1,4 +1,9 @@
-# Toy Caching Service
+Toy Caching Service
+===================
+[![build](https://github.com/dmtrinh/toy-caching-service/actions/workflows/build.yaml/badge.svg)](https://github.com/dmtrinh/toy-caching-service/actions/workflows/build.yaml)
+[![Coverage](.github/badges/jacoco.svg)](https://dmtrinh.github.io/toy-caching-service/index.html)
+[![Branches](.github/badges/branches.svg)](https://dmtrinh.github.io/toy-caching-service/index.html)
+
 Simple service to support implementation of operations that need to be idempotent.
 
 ## Dependencies
