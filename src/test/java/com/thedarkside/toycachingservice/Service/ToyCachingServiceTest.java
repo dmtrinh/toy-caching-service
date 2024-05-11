@@ -12,6 +12,7 @@ import com.thedarkside.toycachingservice.repository.IdempotentRequestRepository;
 import com.thedarkside.toycachingservice.service.ToyCachingService;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -77,11 +78,22 @@ public class ToyCachingServiceTest {
     }
 
     @Test
-    void test_retrieve_givenIdempotentKey_returnException() {
+    void test_retrieve_givenIdempotentKey_returnNull() {
 
-        given(idempotentRequestRepository.findById(null)).willReturn(Optional.of(idempotentRequest));
-
+        // Mock the findById method of the idempotentRequestRepository to return an empty Optional
+        given(idempotentRequestRepository.findById("Order-66")).willReturn(Optional.empty());
+    
         IdempotentRequest response = cachingService.retrieve("Order-66");
         assertThat(response).isNull();
+    }
+
+    @Test
+    void test_getAllRecords_returnSuccess() {
+
+        // Mock the findAll method of the idempotentRequestRepository to return list of IdempotentRequest
+        given(idempotentRequestRepository.findAll()).willReturn(List.of(idempotentRequest));
+
+        // Assert that the result of calling getAllRecords on the cachingService is all the records in the repository
+        assertThat(cachingService.getAllRecords()).isEqualTo(List.of(idempotentRequest));
     }
 }
